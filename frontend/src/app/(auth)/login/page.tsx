@@ -1,19 +1,24 @@
 "use client";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import AuthCard from "@/components/AuthCard";
+import { auth } from "@/lib/firebaseAuth";
+import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { googleProvider, applyPersistence } from "@/lib/firebaseAuth";
 
 const LoginSchema = z.object({
   email: z.string().email("Enter a valid email"),
   password: z.string().min(6, "At least 6 characters"),
+  remember: z.boolean().optional(),
 });
 
 type LoginValues = z.infer<typeof LoginSchema>;
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
@@ -23,7 +28,8 @@ export default function LoginPage() {
   } = useForm<LoginValues>({ resolver: zodResolver(LoginSchema) });
 
   const onSubmit = async (values: LoginValues) => {
-    await new Promise((r) => setTimeout(r, 800));
+    await applyPersistence(Boolean(values.remember));
+    await signInWithEmailAndPassword(auth, values.email, values.password);
     const redirectTo = searchParams.get("redirect") || "/test";
     router.push(redirectTo);
   };
@@ -58,11 +64,28 @@ export default function LoginPage() {
             )}
           </div>
 
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" {...register("remember")} className="h-4 w-4 accent-indigo-600" />
+            Remember me
+          </label>
+
           <button
             disabled={isSubmitting}
             className="w-full rounded-md bg-black text-white dark:bg-white dark:text-black px-4 py-2.5 font-medium hover:opacity-90 transition disabled:opacity-60"
           >
             {isSubmitting ? "Signing in…" : "Sign in"}
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              await applyPersistence(true);
+              await signInWithPopup(auth, googleProvider);
+              const redirectTo = searchParams.get("redirect") || "/test";
+              router.push(redirectTo);
+            }}
+            className="w-full rounded-md border mt-2 border-black/10 dark:border-white/15 px-4 py-2.5 font-medium hover:bg-black/5 dark:hover:bg-white/10 transition"
+          >
+            Continue with Google
           </button>
         </form>
 
@@ -74,6 +97,14 @@ export default function LoginPage() {
         </p>
       </AuthCard>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-6xl py-12 sm:py-16">Loading…</div>}>
+      <LoginPageInner />
+    </Suspense>
   );
 }
 

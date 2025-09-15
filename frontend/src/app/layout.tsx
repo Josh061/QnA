@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import GradientBackground from "@/components/GradientBackground";
+import "@/lib/firebase";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Persona — Personality Test",
+  title: "OrangeSV — Personality Test",
   description: "Beautiful personality test UI with auth",
 };
 

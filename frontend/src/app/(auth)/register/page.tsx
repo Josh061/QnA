@@ -4,6 +4,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import AuthCard from "@/components/AuthCard";
+import { auth } from "@/lib/firebaseAuth";
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from "firebase/auth";
+import { googleProvider, applyPersistence } from "@/lib/firebaseAuth";
 
 const RegisterSchema = z
   .object({
@@ -27,8 +30,12 @@ export default function RegisterPage() {
   } = useForm<RegisterValues>({ resolver: zodResolver(RegisterSchema) });
 
   const onSubmit = async (values: RegisterValues) => {
-    await new Promise((r) => setTimeout(r, 800));
-    alert(JSON.stringify(values, null, 2));
+    await applyPersistence(true);
+    const cred = await createUserWithEmailAndPassword(auth, values.email, values.password);
+    if (values.name) {
+      await updateProfile(cred.user, { displayName: values.name });
+    }
+    alert("Account created. You can now log in.");
   };
 
   return (
@@ -93,6 +100,16 @@ export default function RegisterPage() {
             className="w-full rounded-md bg-black text-white dark:bg-white dark:text-black px-4 py-2.5 font-medium hover:opacity-90 transition disabled:opacity-60"
           >
             {isSubmitting ? "Creating…" : "Create account"}
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              await applyPersistence(true);
+              await signInWithPopup(auth, googleProvider);
+            }}
+            className="w-full rounded-md border mt-2 border-black/10 dark:border-white/15 px-4 py-2.5 font-medium hover:bg-black/5 dark:hover:bg-white/10 transition"
+          >
+            Continue with Google
           </button>
         </form>
 

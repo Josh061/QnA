@@ -41,7 +41,7 @@ export async function GET() {
           return { id, question, options, type };
         })
         .filter((q) => q.question && String(q.question).trim().length > 0);
-    } catch (e) {
+    } catch {
       // ignore parsing error; we'll fall back to built-in
     }
 
